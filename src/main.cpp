@@ -9,15 +9,18 @@ void startAdvertising();
 NimBLEServer *pServer = nullptr;
 NimBLECharacteristic *pHRMChar = nullptr;
 NimBLEAdvertising *pAdvertising = nullptr;
+bool deviceConnected = false;
 
 class HRMServerCallbacks : public NimBLEServerCallbacks
 {
   void onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo) override
   {
+    deviceConnected = true;
     Serial.println("Client connected");
   }
   void onDisconnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo, int reason) override
   {
+    deviceConnected = false;
     Serial.println("Client disconnected");
     startAdvertising();
   }
@@ -98,6 +101,10 @@ void setup()
 
 void loop()
 {
+  if (!deviceConnected)
+  {
+    return;
+  }
   uint16_t hr = getNextHRValue();
   uint8_t hrmData[3];
   size_t len = 0;
