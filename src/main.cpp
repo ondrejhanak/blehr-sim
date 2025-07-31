@@ -4,8 +4,30 @@
 
 #include <NimBLEDevice.h>
 
+void startAdvertising();
+
 NimBLEServer *pServer = nullptr;
 NimBLECharacteristic *pHRMChar = nullptr;
+NimBLEAdvertising *pAdvertising = nullptr;
+
+class HRMServerCallbacks : public NimBLEServerCallbacks
+{
+  void onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo) override
+  {
+    Serial.println("Client connected");
+  }
+  void onDisconnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo, int reason) override
+  {
+    Serial.println("Client disconnected");
+    startAdvertising();
+  }
+};
+
+void startAdvertising()
+{
+  pAdvertising->start();
+  Serial.println("Started advertising");
+}
 
 uint16_t getNextHRValue()
 {
@@ -59,6 +81,7 @@ void setup()
   Serial.begin(115200);
   NimBLEDevice::init("ESP32-HRM-Sim");
   pServer = NimBLEDevice::createServer();
+  pServer->setCallbacks(new HRMServerCallbacks());
 
   NimBLEService *pService = pServer->createService("180D");
   pHRMChar = pService->createCharacteristic("2A37", NIMBLE_PROPERTY::NOTIFY);
@@ -68,9 +91,9 @@ void setup()
   pHRMChar->addDescriptor(cccd);
   pService->start();
 
-  NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
+  pAdvertising = NimBLEDevice::getAdvertising();
   pAdvertising->addServiceUUID("180D");
-  pAdvertising->start();
+  startAdvertising();
 }
 
 void loop()
@@ -95,6 +118,6 @@ void loop()
 
   pHRMChar->setValue(hrmData, len);
   pHRMChar->notify();
-  Serial.printf("%d\n", hr);
+  Serial.printf("Sent value %d\n", hr);
   delay(1000);
 }
