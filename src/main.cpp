@@ -88,7 +88,7 @@ void loop()
   else
   {
     hrmData[0] = 0x01; // 16b little endian HR value
-    hrmData[1] = hr & 0x0F;
+    hrmData[1] = hr & 0xFF;
     hrmData[2] = hr >> 8;
     len = 3;
   }
